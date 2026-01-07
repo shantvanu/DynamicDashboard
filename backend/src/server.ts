@@ -1,7 +1,8 @@
 import http from 'http';
 import app from './app';
 import './cache/redis';
-import { initWebSocket } from './websocket';
+import { initWebSocket } from './websocket/socket';
+
 
 const PORT = process.env.PORT || 4000;
 

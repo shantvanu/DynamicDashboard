@@ -1,45 +1,30 @@
+import { Server as HTTPServer } from 'http';
 import { WebSocketServer } from 'ws';
-import { buildPortfolio } from '../services/portfolio.service';
+import { buildLivePortfolio } from '../services/portfolio.service';
 
-let wss: WebSocketServer | null = null;
-
-// Initialize WebSocket server
-export const initWebSocket = (server: any) => {
-  wss = new WebSocketServer({ server });
+export const initWebSocket = (server: HTTPServer) => {
+  const wss = new WebSocketServer({ server });
 
   console.log('WebSocket server initialized');
 
   wss.on('connection', async (ws) => {
-    console.log('Client connected to WebSocket');
+    console.log('WebSocket client connected');
 
-    // Send initial data immediately
-    try {
-      const portfolio = await buildPortfolio();
-      ws.send(JSON.stringify(portfolio));
-    } catch (err) {
-      console.error('WS initial send error:', err);
-    }
+    const sendPortfolio = async () => {
+      try {
+        const data = await buildLivePortfolio();
+        ws.send(JSON.stringify(data));
+      } catch (err) {
+        console.error('WebSocket send failed:', err);
+      }
+    };
+
+    sendPortfolio();
+    const interval = setInterval(sendPortfolio, 15000);
 
     ws.on('close', () => {
-      console.log('Client disconnected from WebSocket');
+      clearInterval(interval);
+      console.log('WebSocket client disconnected');
     });
   });
-
-  // Broadcast updates every 15 seconds
-  setInterval(async () => {
-    if (!wss) return;
-
-    try {
-      const portfolio = await buildPortfolio();
-      const data = JSON.stringify(portfolio);
-
-      wss.clients.forEach((client) => {
-        if (client.readyState === 1) {
-          client.send(data);
-        }
-      });
-    } catch (err) {
-      console.error('WS broadcast error:', err);
-    }
-  }, 15000);
 };

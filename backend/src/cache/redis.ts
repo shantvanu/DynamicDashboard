@@ -1,31 +1,24 @@
 import { createClient } from 'redis';
 
-let redisClient: ReturnType<typeof createClient> | null = null;
+export const redisEnabled = !!process.env.REDIS_URL;
 
-export async function connectRedis() {
-  try {
-    const redisUrl = process.env.REDIS_URL;
+export const redisClient = redisEnabled
+  ? createClient({
+      url: process.env.REDIS_URL
+    })
+  : null;
 
-    if (!redisUrl) {
-      console.warn('⚠️ Redis URL not provided. Running without cache.');
-      return null;
-    }
+if (redisEnabled && redisClient) {
+  redisClient.on('error', (err) => {
+    console.warn('Redis error:', err.message);
+  });
 
-    redisClient = createClient({ url: redisUrl });
-
-    redisClient.on('error', err => {
-      console.error('Redis error:', err.message);
-    });
-
-    await redisClient.connect();
-    console.log('✅ Redis connected');
-    return redisClient;
-  } catch (err) {
-    console.warn('⚠️ Redis unavailable. Continuing without cache.');
-    return null;
-  }
-}
-
-export function getRedisClient() {
-  return redisClient;
+  redisClient
+    .connect()
+    .then(() => console.log('Redis connected'))
+    .catch(() =>
+      console.warn('Redis connection failed, continuing without cache')
+    );
+} else {
+  console.log('Redis URL not provided. Running without cache.');
 }

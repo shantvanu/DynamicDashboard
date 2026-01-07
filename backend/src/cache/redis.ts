@@ -1,20 +1,31 @@
 import { createClient } from 'redis';
 
-const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+let redisClient: ReturnType<typeof createClient> | null = null;
 
-const redisClient = createClient({
-  url: redisUrl
-});
+export async function connectRedis() {
+  try {
+    const redisUrl = process.env.REDIS_URL;
 
-redisClient.on('error', (err) => {
-  console.error('Redis Client Error', err);
-});
+    if (!redisUrl) {
+      console.warn('⚠️ Redis URL not provided. Running without cache.');
+      return null;
+    }
 
-export const connectRedis = async () => {
-  if (!redisClient.isOpen) {
+    redisClient = createClient({ url: redisUrl });
+
+    redisClient.on('error', err => {
+      console.error('Redis error:', err.message);
+    });
+
     await redisClient.connect();
-    console.log('Redis connected');
+    console.log('✅ Redis connected');
+    return redisClient;
+  } catch (err) {
+    console.warn('⚠️ Redis unavailable. Continuing without cache.');
+    return null;
   }
-};
+}
 
-export default redisClient;
+export function getRedisClient() {
+  return redisClient;
+}

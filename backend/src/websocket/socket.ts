@@ -1,30 +1,20 @@
-import { Server as HTTPServer } from 'http';
-import { WebSocketServer } from 'ws';
-import { buildLivePortfolio } from '../services/portfolio.service';
+import { Server } from 'ws';
+import { buildPortfolio } from '../services/portfolio.service';
 
-export const initWebSocket = (server: HTTPServer) => {
-  const wss = new WebSocketServer({ server });
+export const initWebSocket = (server: any) => {
+  const wss = new Server({ server });
 
   console.log('WebSocket server initialized');
 
   wss.on('connection', async (ws) => {
-    console.log('WebSocket client connected');
+    const portfolio = await buildPortfolio();
+    ws.send(JSON.stringify(portfolio));
 
-    const sendPortfolio = async () => {
-      try {
-        const data = await buildLivePortfolio();
-        ws.send(JSON.stringify(data));
-      } catch (err) {
-        console.error('WebSocket send failed:', err);
-      }
-    };
+    const interval = setInterval(async () => {
+      const updated = await buildPortfolio();
+      ws.send(JSON.stringify(updated));
+    }, 15000);
 
-    sendPortfolio();
-    const interval = setInterval(sendPortfolio, 15000);
-
-    ws.on('close', () => {
-      clearInterval(interval);
-      console.log('WebSocket client disconnected');
-    });
+    ws.on('close', () => clearInterval(interval));
   });
 };

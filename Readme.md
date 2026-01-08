@@ -3,6 +3,9 @@
 This project is a full-stack implementation of a real-time stock portfolio dashboard, built as part of the **Full Stack Engineer Technical Assignment** for **8byte**.
 
 The application displays portfolio holdings, sector-level summaries, and live market metrics such as CMP, Present Value, and Gain/Loss using real-time updates.
+
+The live Deployment link of the project is : https://portfolio-dynamic-dashboard.netlify.app/
+
 ---
 ## Tech Stack Used
 

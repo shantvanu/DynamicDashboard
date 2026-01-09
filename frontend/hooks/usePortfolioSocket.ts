@@ -3,19 +3,18 @@
 import { useEffect, useState } from 'react';
 import { PortfolioResponse } from '@/types/portfolio';
 
+const WS_URL = process.env.NEXT_PUBLIC_WS_URL;
+
 export function usePortfolioSocket() {
   const [data, setData] = useState<PortfolioResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(
+    !WS_URL ? 'WebSocket configuration missing' : null
+  );
 
   useEffect(() => {
-    const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'wss://dynamicdashboard-cg3t.onrender.com';
+    if (!WS_URL) return;
 
-if (!WS_URL) {
-  throw new Error('NEXT_PUBLIC_WS_URL is not defined');
-}
-
-const ws = new WebSocket(WS_URL);
-
+    const ws = new WebSocket(WS_URL);
 
     ws.onmessage = (event) => {
       try {
@@ -29,7 +28,9 @@ const ws = new WebSocket(WS_URL);
       setError('WebSocket connection error');
     };
 
-    return () => ws.close();
+    return () => {
+      ws.close();
+    };
   }, []);
 
   return { data, error };

@@ -8,7 +8,14 @@ export function usePortfolioSocket() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const ws = new WebSocket('ws://localhost:4000');
+    const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'wss://dynamicdashboard-cg3t.onrender.com';
+
+if (!WS_URL) {
+  throw new Error('NEXT_PUBLIC_WS_URL is not defined');
+}
+
+const ws = new WebSocket(WS_URL);
+
 
     ws.onmessage = (event) => {
       try {
